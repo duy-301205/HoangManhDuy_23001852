@@ -68,6 +68,7 @@ try {
     } else {
         echo "Danh sách phim đang trống.<br>";
     }
+
 } catch (Exception $e) {
     echo "Lỗi: " . $e->getMessage();
 }
