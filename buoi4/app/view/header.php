@@ -10,4 +10,3 @@
         <a href="product_list.php">Danh sách sản phẩm</a> |
         <a href="product_add.php">Thêm sản phẩm</a>
     </nav>
-    <hr>
