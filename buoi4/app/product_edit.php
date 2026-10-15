@@ -1,5 +1,6 @@
 <?php
 require_once 'model/product.php';
+require_once "common/auth.php";
 
 if (!isset($_GET['id'])) {
     die("Không tìm thấy mã sản phẩm!");

@@ -1,5 +1,6 @@
 <?php
 require_once 'model/product.php';
+require_once "common/auth.php";
 $error = '';
 $success = '';
 
