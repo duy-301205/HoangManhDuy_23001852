@@ -83,7 +83,7 @@
         return {
           tenCongViecMoi: '',
           currentFilter: 'all',
-          danhSach: window.danhSachCongViecBanDau
+          danhSach: [...window.danhSachCongViecBanDau]
         };
       },
       computed: {
@@ -110,7 +110,7 @@
           if (this.tenCongViecMoi === '') return;
           
           this.danhSach.push({
-            id: Date.now(),
+            id: Date.now() + Math.floor(Math.random() * 1000),
             ten: this.tenCongViecMoi,
             hoanThanh: false
           });
