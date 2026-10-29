@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Đặt vé xem phim</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="./data_bai2.js"></script>
+  <style>
+    body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; padding-top: 30px; }
+    
+    .booking-form { width: 380px; background: #fff; padding: 20px 24px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+    h2 { margin: 0 0 16px; color: #1e293b; font-size: 20px; text-align: center; }
+    
+    .form-group { margin-bottom: 12px; }
+    .form-group label { display: block; margin-bottom: 4px; font-weight: 600; font-size: 13px; color: #475569; }
+    
+    input[type="text"], select { width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 13px; }
+    .radio-label { font-weight: normal !important; display: inline-block; margin-right: 12px; cursor: pointer; }
+    
+    .qty-btn { width: 28px; height: 28px; background: #e2e8f0; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+    .qty-btn:hover { background: #cbd5e1; }
+    .qty-input { width: 45px; text-align: center; padding: 4px; border: 1px solid #cbd5e1; border-radius: 4px; margin: 0 4px; }
+    
+    .price-tag { font-size: 15px; color: #2563eb; margin: 14px 0; }
+    
+    .btn-submit { padding: 8px 16px; background: #2563eb; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; margin-right: 8px; }
+    .btn-submit:disabled { background: #94a3b8; cursor: not-allowed; }
+    .btn-reset { padding: 8px 16px; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer; font-weight: 600; }
+    
+    .confirmation { margin-top: 16px; padding: 12px; background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; font-size: 13px; color: #166534; }
+    .confirmation h3 { margin: 0 0 8px; font-size: 15px; color: #15803d; }
+    .confirmation p { margin: 4px 0; }
+  </style>
+</head>
+<body>
+  <div id="app" class="booking-form">
+    <h2>🎬 Đặt Vé Xem Phim</h2>
+
+    <form @submit.prevent="xuLyDatVe">
+      <div class="form-group">
+        <label>Họ và tên khách hàng:</label>
+        <input type="text" v-model.trim="hoTen" placeholder="Nhập họ tên...">
+      </div>
+
+      <div class="form-group">
+        <label>Chọn suất chiếu:</label>
+        <select v-model="suatChieu">
+          <option v-for="item in danhSachSuatChieu" :key="item.value" :value="item.value">
+            {{ item.text }}
+          </option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Loại vé:</label>
+        <label class="radio-label"><input type="radio" v-model="loaiVe" :value="70000"> Thường (70k)</label>
+        <label class="radio-label"><input type="radio" v-model="loaiVe" :value="100000"> VIP (100k)</label>
+      </div>
+
+      <div class="form-group">
+        <label>Số lượng (1 - 10):</label>
+        <button type="button" class="qty-btn" @click="giamSoLuong">-</button>
+        <input type="number" class="qty-input" v-model.number="soLuong" min="1" max="10">
+        <button type="button" class="qty-btn" @click="tangSoLuong">+</button>
+      </div>
+
+      <div class="form-group">
+        <label class="radio-label" style="margin-top: 4px;">
+          <input type="checkbox" v-model="hasCombo"> Combo bắp nước (+45.000đ)
+        </label>
+      </div>
+
+      <p class="price-tag">Tổng tiền: <strong>{{ tongTien.toLocaleString() }} VNĐ</strong></p>
+
+      <button type="submit" class="btn-submit" :disabled="!isFormValid">Đặt vé</button>
+      <button type="button" class="btn-reset" @click="resetForm">Đặt lại</button>
+    </form>
+
+    <div v-if="thongTinXacNhan" class="confirmation">
+      <h3>✅ Xác Nhận Thành Công!</h3>
+      <p>Khách hàng: <strong>{{ thongTinXacNhan.hoTen }}</strong></p>
+      <p>Suất chiếu: {{ thongTinXacNhan.suatChieu }}</p>
+      <p>Loại vé: {{ thongTinXacNhan.loaiVe === 100000 ? 'VIP' : 'Thường' }} | SL: {{ thongTinXacNhan.soLuong }}</p>
+      <p>Combo bắp nước: {{ thongTinXacNhan.hasCombo ? 'Có' : 'Không' }}</p>
+      <p style="margin-top: 6px; font-size: 14px;"><strong>Thanh toán: {{ thongTinXacNhan.tongTien.toLocaleString() }} VNĐ</strong></p>
+    </div>
+  </div>
+
+  <script>
+    const { createApp } = Vue;
+
+    createApp({
+      data() {
+        return {
+          hoTen: window.movieBookingInit.hoTen,
+          suatChieu: window.movieBookingInit.suatChieu,
+          loaiVe: window.movieBookingInit.loaiVe,
+          soLuong: window.movieBookingInit.soLuong,
+          hasCombo: window.movieBookingInit.hasCombo,
+          danhSachSuatChieu: window.movieBookingInit.danhSachSuatChieu,
+          thongTinXacNhan: null
+        };
+      },
+      computed: {
+        tongTien() {
+          const tienCombo = this.hasCombo ? 45000 : 0;
+          return (this.loaiVe * this.soLuong) + tienCombo;
+        },
+        isFormValid() {
+          return this.hoTen.length > 0 && 
+                 Number.isInteger(this.soLuong) && 
+                 this.soLuong >= 1 && 
+                 this.soLuong <= 10;
+        }
+      },
+      methods: {
+        tangSoLuong() {
+          if (this.soLuong < 10) this.soLuong++;
+        },
+        giamSoLuong() {
+          if (this.soLuong > 1) this.soLuong--;
+        },
+        resetForm() {
+          this.hoTen = '';
+          this.suatChieu = window.movieBookingInit.suatChieu;
+          this.loaiVe = window.movieBookingInit.loaiVe;
+          this.soLuong = 1;
+          this.hasCombo = false;
+          this.thongTinXacNhan = null;
+        },
+        xuLyDatVe() {
+          if (this.isFormValid) {
+            this.thongTinXacNhan = {
+              hoTen: this.hoTen,
+              suatChieu: this.suatChieu,
+              loaiVe: this.loaiVe,
+              soLuong: this.soLuong,
+              hasCombo: this.hasCombo,
+              tongTien: this.tongTien
+            };
+          }
+        }
+      }
+    }).mount('#app');
+  </script>
+</body>
+</html>

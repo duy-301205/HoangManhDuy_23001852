@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Quản lý công việc cá nhân</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="./data_bai3.js"></script>
+  <style>
+    body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; padding-top: 30px; }
+    
+    .todo-app { width: 400px; background: #fff; padding: 20px 24px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+    h2 { margin: 0 0 16px; color: #1e293b; font-size: 20px; text-align: center; }
+    
+    .input-group { display: flex; gap: 8px; margin-bottom: 14px; }
+    .input-group input { flex: 1; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; outline: none; }
+    .input-group input:focus { border-color: #2563eb; }
+    .btn-add { padding: 8px 16px; background: #2563eb; color: #fff; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; }
+    .btn-add:hover { background: #1d4ed8; }
+
+    .filters { display: flex; gap: 6px; margin-bottom: 14px; }
+    .filters button { flex: 1; padding: 6px 0; border: 1px solid #cbd5e1; background: #f8fafc; color: #475569; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500; }
+    .filters button.active { background: #2563eb; color: #fff; border-color: #2563eb; font-weight: 600; }
+
+    .stats { font-size: 13px; color: #64748b; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #f1f5f9; }
+
+    .todo-list { list-style: none; padding: 0; margin: 0; }
+    .todo-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f1f5f9; font-size: 13.5px; }
+    .todo-item label { display: flex; align-items: center; gap: 8px; cursor: pointer; color: #334155; }
+    .completed { text-decoration: line-through; color: #94a3b8; }
+
+    .btn-del { padding: 3px 8px; background: #fee2e2; color: #dc2626; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600; }
+    .btn-del:hover { background: #fca5a5; }
+
+    .btn-clear-all { width: 100%; margin-top: 14px; padding: 8px; background: #fff1f2; color: #e11d48; border: 1px solid #fecdd3; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; }
+    .btn-clear-all:hover { background: #ffe4e6; }
+
+    .empty-msg { color: #94a3b8; font-style: italic; margin: 20px 0; text-align: center; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <div id="app" class="todo-app">
+    <h2>📝 Quản Lý Công Việc</h2>
+
+    <div class="input-group">
+      <input type="text" v-model.trim="tenCongViecMoi" @keyup.enter="themCongViec" placeholder="Nhập công việc mới...">
+      <button class="btn-add" @click="themCongViec">Thêm</button>
+    </div>
+
+    <div class="filters">
+      <button :class="{ active: currentFilter === 'all' }" @click="currentFilter = 'all'">Tất cả</button>
+      <button :class="{ active: currentFilter === 'pending' }" @click="currentFilter = 'pending'">Chưa xong</button>
+      <button :class="{ active: currentFilter === 'completed' }" @click="currentFilter = 'completed'">Đã xong</button>
+    </div>
+
+    <div class="stats">
+      Tổng số: <strong>{{ tongSoCongViec }}</strong> | Chưa xong: <strong>{{ soViecChuaHoanThanh }}</strong>
+    </div>
+
+    <div v-if="danhSachLoc.length === 0" class="empty-msg">
+      Không có công việc nào trong danh sách.
+    </div>
+
+    <ul v-else class="todo-list">
+      <li v-for="item in danhSachLoc" :key="item.id" class="todo-item">
+        <label :class="{ completed: item.hoanThanh }">
+          <input type="checkbox" v-model="item.hoanThanh">
+          {{ item.ten }}
+        </label>
+        <button class="btn-del" @click="xoaCongViec(item.id)">Xóa</button>
+      </li>
+    </ul>
+
+    <button v-if="coViecDaHoanThanh" class="btn-clear-all" @click="xoaCacViecDaHoanThanh">
+      🧹 Xóa các việc đã hoàn thành
+    </button>
+  </div>
+
+  <script>
+    const { createApp } = Vue;
+
+    createApp({
+      data() {
+        return {
+          tenCongViecMoi: '',
+          currentFilter: 'all',
+          danhSach: window.danhSachCongViecBanDau
+        };
+      },
+      computed: {
+        danhSachLoc() {
+          if (this.currentFilter === 'pending') {
+            return this.danhSach.filter(item => !item.hoanThanh);
+          } else if (this.currentFilter === 'completed') {
+            return this.danhSach.filter(item => item.hoanThanh);
+          }
+          return this.danhSach;
+        },
+        tongSoCongViec() {
+          return this.danhSach.length;
+        },
+        soViecChuaHoanThanh() {
+          return this.danhSach.filter(item => !item.hoanThanh).length;
+        },
+        coViecDaHoanThanh() {
+          return this.danhSach.some(item => item.hoanThanh);
+        }
+      },
+      methods: {
+        themCongViec() {
+          if (this.tenCongViecMoi === '') return;
+          
+          this.danhSach.push({
+            id: Date.now(),
+            ten: this.tenCongViecMoi,
+            hoanThanh: false
+          });
+          this.tenCongViecMoi = '';
+        },
+        xoaCongViec(id) {
+          this.danhSach = this.danhSach.filter(item => item.id !== id);
+        },
+        xoaCacViecDaHoanThanh() {
+          this.danhSach = this.danhSach.filter(item => !item.hoanThanh);
+        }
+      }
+    }).mount('#app');
+  </script>
+</body>
+</html>
