@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Bài 2 - Component Danh Mục</title>
+</head>
+<body>
+    <div id="app">
+        <h2>Danh mục sản phẩm</h2>
+        <div style="display: flex; flex-wrap: wrap;">
+            <the-san-pham 
+                v-for="sp in dsSanPham" 
+                :key="sp.id"
+                :ten="sp.ten"
+                :gia="sp.gia"
+                :anh="sp.anh"
+                :mo-ta="sp.moTa"
+                :ton-kho="sp.tonKho">
+            </the-san-pham>
+        </div>
+    </div>
+    <script type="module" src="app.js"></script>
+</body>
+</html>

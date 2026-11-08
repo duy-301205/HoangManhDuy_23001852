@@ -1,0 +1,9 @@
+body { font-family: Arial, sans-serif; padding: 20px; }
+table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+.text-center { text-align: center; }
+.in-stock { color: green; font-weight: bold; }
+.out-of-stock { color: red; font-weight: bold; }
+.form-group { margin-bottom: 10px; }
+.warning { color: orange; font-style: italic; margin-left: 10px; }
+fieldset input, fieldset select { margin-right: 5px; }

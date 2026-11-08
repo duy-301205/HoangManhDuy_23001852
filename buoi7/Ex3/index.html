@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Bài 3 - Giỏ Hàng</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app" class="cart-container">
+        <h2>Giỏ Hàng Của Bạn</h2>
+
+        <div v-if="cart.length === 0" class="empty-cart">
+            Giỏ hàng trống
+        </div>
+
+        <div v-else>
+            <dong-gio-hang 
+                v-for="item in cart" 
+                :key="item.id" 
+                :item="item"
+                @doi-so-luong="updateQuantity"
+                @yeu-cau-xoa="removeItem">
+            </dong-gio-hang>
+
+            <div class="summary">
+                <p>Tổng số lượng: {{ totalQuantity }}</p>
+                <p>Tổng tiền: {{ totalPrice.toLocaleString() }} VNĐ</p>
+            </div>
+        </div>
+    </div>
+    <script type="module" src="app.js"></script>
+</body>
+</html>

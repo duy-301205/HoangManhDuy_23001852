@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Bài 1 - Quản lý sản phẩm</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <h2>Trạng thái trang: {{ pageStatus }}</h2>
+
+        <div class="form-group">
+            <input type="text" v-model="searchQuery" placeholder="Tìm kiếm theo tên...">
+            <span class="warning" v-if="searchMessage">{{ searchMessage }}</span>
+        </div>
+
+        <div class="form-group">
+            <select v-model="selectedCategory">
+                <option value="">Tất cả danh mục</option>
+                <option value="Điện thoại">Điện thoại</option>
+                <option value="Laptop">Laptop</option>
+                <option value="Phụ kiện">Phụ kiện</option>
+            </select>
+            <select v-model="sortOrder">
+                <option value="none">Sắp xếp mặc định</option>
+                <option value="asc">Giá tăng dần</option>
+                <option value="desc">Giá giảm dần</option>
+            </select>
+        </div>
+
+        <fieldset class="form-group">
+            <legend>Thêm Sản Phẩm Mới</legend>
+            <input type="text" v-model="newProduct.name" placeholder="Tên sản phẩm">
+            <input type="number" v-model.number="newProduct.price" placeholder="Giá">
+            <select v-model="newProduct.category">
+                <option value="Điện thoại">Điện thoại</option>
+                <option value="Laptop">Laptop</option>
+                <option value="Phụ kiện">Phụ kiện</option>
+            </select>
+            <input type="number" v-model.number="newProduct.stock" placeholder="Tồn kho">
+            <button @click="addProduct">Thêm</button>
+        </fieldset>
+
+        <p>
+            <strong>Thống kê:</strong> Hiển thị {{ displayedCount }} / {{ totalCount }} sản phẩm. 
+            | Tổng giá trị tồn kho: {{ totalValue.toLocaleString() }} VNĐ.
+        </p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Tên</th>
+                    <th>Giá (VNĐ)</th>
+                    <th>Danh mục</th>
+                    <th>Tồn kho</th>
+                    <th>Trạng thái</th>
+                    <th>Hành động</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-if="filteredProducts.length === 0">
+                    <td colspan="7" class="text-center">Không có sản phẩm phù hợp</td>
+                </tr>
+                <tr v-for="product in filteredProducts" :key="product.id">
+                    <td>{{ product.id }}</td>
+                    <td>{{ product.name }}</td>
+                    <td>{{ product.price.toLocaleString() }}</td>
+                    <td>{{ product.category }}</td>
+                    <td>{{ product.stock }}</td>
+                    <td>
+                        <span v-if="product.stock > 0" class="in-stock">Còn hàng</span>
+                        <span v-else class="out-of-stock">Hết hàng</span>
+                    </td>
+                    <td><button @click="deleteProduct(product.id)">Xóa</button></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>
