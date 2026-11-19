@@ -23,6 +23,13 @@
         table { width: 100%; border-collapse: collapse; }
         th, td { border: 1px solid #cbd5e1; padding: 10px 12px; text-align: left; }
         th { background: #f1f5f9; }
+        button:disabled { opacity: .55; cursor: default; }
+        fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
+        .image-field { margin-bottom: 14px; }
+        .image-preview { display: block; width: 140px; height: 110px; object-fit: contain; margin: 8px 0; }
+        .thumbnail { width: 56px; height: 56px; object-fit: contain; }
+        .pagination { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 16px; }
+        .table-wrap { overflow-x: auto; }
         .text-right { text-align: right; }
         .text-center { text-align: center; }
     </style>
@@ -38,80 +45,110 @@
             {{ successMessage }}
         </div>
 
+        <div v-if="pendingUpload && pendingUpload.error" class="alert alert-error" role="alert">
+            <p>Đã lưu thông tin sản phẩm #{{ pendingUpload.id }}. Upload ảnh thất bại. {{ pendingUpload.error }}</p>
+            <button type="button" class="btn-primary" :disabled="busy || loading" @click="retryUpload">Thử lại</button>
+            <button type="button" class="btn-secondary" :disabled="busy" @click="pendingUpload = null">Bỏ qua ảnh</button>
+        </div>
+
         <div class="card">
             <h2>{{ editingId !== null ? 'Sửa sản phẩm #' + editingId : 'Thêm sản phẩm mới' }}</h2>
             <form @submit.prevent="saveProduct">
-                <div class="form-grid">
-                    <div>
-                        <label for="name">Tên sản phẩm</label>
-                        <input
-                            id="name"
-                            type="text"
-                            v-model="form.name"
-                            placeholder="Nhập tên sản phẩm"
-                        >
+                <fieldset :disabled="busy || loading || !!pendingUpload">
+                    <div class="form-grid">
+                        <div>
+                            <label for="name">Tên sản phẩm</label>
+                            <input
+                                id="name"
+                                type="text"
+                                v-model="form.name"
+                                placeholder="Nhập tên sản phẩm"
+                            >
+                        </div>
+                        <div>
+                            <label for="price">Đơn giá</label>
+                            <input
+                                id="price"
+                                type="number"
+                                step="any"
+                                v-model="form.price"
+                                placeholder="Ví dụ: 10000"
+                            >
+                        </div>
+                        <div>
+                            <label for="stock">Số lượng tồn</label>
+                            <input
+                                id="stock"
+                                type="number"
+                                step="any"
+                                v-model="form.stock"
+                                placeholder="Ví dụ: 20"
+                            >
+                        </div>
                     </div>
-                    <div>
-                        <label for="price">Đơn giá</label>
-                        <input
-                            id="price"
-                            type="number"
-                            step="any"
-                            v-model="form.price"
-                            placeholder="Ví dụ: 10000"
-                        >
+                    <div class="image-field">
+                        <label for="image">Ảnh sản phẩm (JPG, JPEG hoặc PNG, tối đa 2 MB)</label>
+                        <input id="image" ref="fileInput" type="file" accept=".jpg,.jpeg,.png" @change="selectImage">
+                        <p v-if="imageError" class="alert alert-error" role="alert">{{ imageError }}</p>
+                        <img v-if="imagePreview || currentImage" class="image-preview" :src="imagePreview || currentImage"
+                             :alt="imagePreview ? 'Xem trước ảnh đã chọn' : 'Ảnh hiện tại'">
+                        <button v-if="imagePreview || imageError" type="button" @click="clearImageSelection()">Bỏ chọn ảnh</button>
                     </div>
-                    <div>
-                        <label for="stock">Số lượng tồn</label>
-                        <input
-                            id="stock"
-                            type="number"
-                            step="any"
-                            v-model="form.stock"
-                            placeholder="Ví dụ: 20"
-                        >
-                    </div>
-                </div>
-                <button type="submit" class="btn-primary">Lưu</button>
-                <button
-                    v-if="editingId !== null"
-                    type="button"
-                    class="btn-secondary"
-                    @click="resetForm"
-                >
-                    Hủy
-                </button>
+                    <button type="submit" class="btn-primary" :disabled="!!imageError">Lưu</button>
+                    <button
+                        v-if="editingId !== null"
+                        type="button"
+                        class="btn-secondary"
+                        @click="resetForm"
+                    >
+                        Hủy
+                    </button>
+                </fieldset>
             </form>
         </div>
 
-        <table>
-            <thead>
-                <tr>
-                    <th>Tên sản phẩm</th>
-                    <th class="text-right">Đơn giá (đồng)</th>
-                    <th class="text-right">Số lượng tồn</th>
-                    <th class="text-center">Thao tác</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr v-if="products.length === 0">
-                    <td colspan="4" class="text-center">Chưa có sản phẩm nào.</td>
-                </tr>
-                <tr v-for="product in products" :key="product.id">
-                    <td>{{ product.name }}</td>
-                    <td class="text-right">{{ formatPrice(product.price) }}</td>
-                    <td class="text-right">{{ product.stock }}</td>
-                    <td class="text-center">
-                        <button type="button" class="btn-edit" @click="startEdit(product)">
-                            Sửa
-                        </button>
-                        <button type="button" class="btn-delete" @click="deleteProduct(product)">
-                            Xóa
-                        </button>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Ảnh</th>
+                        <th>Tên sản phẩm</th>
+                        <th class="text-right">Đơn giá (đồng)</th>
+                        <th class="text-right">Số lượng tồn</th>
+                        <th class="text-center">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-if="products.length === 0">
+                        <td colspan="5" class="text-center">Chưa có sản phẩm</td>
+                    </tr>
+                    <tr v-for="product in products" :key="product.id">
+                        <td>
+                            <img v-if="product.image" class="thumbnail" :src="product.image" :alt="product.name">
+                            <span v-else>Chưa có ảnh</span>
+                        </td>
+                        <td>{{ product.name }}</td>
+                        <td class="text-right">{{ formatPrice(product.price) }}</td>
+                        <td class="text-right">{{ product.stock }}</td>
+                        <td class="text-center">
+                            <button type="button" class="btn-edit" :disabled="busy || loading || !!pendingUpload" @click="startEdit(product)">
+                                Sửa
+                            </button>
+                            <button type="button" class="btn-delete" :disabled="busy || loading" @click="deleteProduct(product)">
+                                Xóa
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <nav class="pagination" aria-label="Phân trang sản phẩm">
+            <button type="button" :disabled="busy || loading || pagination.page <= 1"
+                    @click="fetchProducts(pagination.page - 1)">Trước</button>
+            <span aria-live="polite">Trang {{ pagination.page }} / {{ pagination.total_pages }} — Tổng {{ pagination.total }} sản phẩm</span>
+            <button type="button" :disabled="busy || loading || pagination.page >= pagination.total_pages"
+                    @click="fetchProducts(pagination.page + 1)">Sau</button>
+        </nav>
     </div>
 
     <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
